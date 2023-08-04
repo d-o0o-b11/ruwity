@@ -1,0 +1,31 @@
+version: '3.7'
+
+services:
+  nestjs_server:
+    container_name: server
+    image: jimin8830/potenday:ruwity
+    volumes:
+      - /usr/src/potenday/app/node_modules
+    ports:
+      - 3000:3000
+    restart: always
+    networks:
+      - test-networks
+
+  nginx:
+    image: nginx:latest
+    container_name: proxy
+    ports:
+      - '80:80'
+    restart: 'unless-stopped'
+    depends_on:
+      - server
+    volumes:
+      - ./nginx/nginx.dev-new.conf:/etc/nginx/nginx.conf
+    networks:
+      - test-networks
+
+networks:
+  test-networks:
+    driver: bridge
+    name: test-networks
