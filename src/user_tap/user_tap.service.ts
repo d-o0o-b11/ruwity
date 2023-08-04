@@ -106,6 +106,16 @@ export class UserTapService {
     return true;
   }
 
+  async setNullLinkImg(tap_id: number) {
+    const updateResult = await this.userTapLinkRepository.update(tap_id, {
+      img: "",
+    });
+
+    if (!updateResult.affected) throw new Error("이미지 삭제 실패");
+
+    return true;
+  }
+
   async findAllByUserIdOrderByCreatedAtDesc(user_id: number): Promise<any[]> {
     const textResults = await this.userTapTextRepository.find({
       where: {

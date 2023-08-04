@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { UserUrlEntity } from "./entities/user_url.entity";
 import { Repository } from "typeorm";
 import { s3 } from "src/config/config/s3.config";
+import { CreateUserUrlDto } from "src/user_user/dto/create-user_url.dto";
 
 @Injectable()
 export class UserUrlService {
@@ -70,5 +71,29 @@ export class UserUrlService {
     const preSignedUrl = await s3.getSignedUrlPromise("getObject", imageParam);
 
     return preSignedUrl;
+  }
+
+  async saveUserUrl(id: number, dto: CreateUserUrlDto) {
+    const saveResult = await this.userUrlRepository.save(
+      new UserUrlEntity({
+        img: dto.img,
+        title: dto.title,
+        url: dto.url,
+        view: 0,
+        user_id: id,
+      })
+    );
+
+    return saveResult;
+  }
+
+  async findTodayUrlToUrl(url_id: number) {
+    const findResult = await this.userUrlRepository.findOne({
+      where: {
+        id: url_id,
+      },
+    });
+
+    return findResult;
   }
 }

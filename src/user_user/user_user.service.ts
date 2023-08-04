@@ -15,15 +15,13 @@ import { UserPageEntity } from "./entities/user_page.entity";
 import { UserReportDto } from "./dto/save-user-report.dto";
 import { UserTodyLinkEntity } from "./entities/user_today_link.entity";
 import { CreateUserUrlDto } from "src/user_user/dto/create-user_url.dto";
-import { UserUrlEntity } from "src/user_url/entities/user_url.entity";
 import { s3 } from "src/config/config/s3.config";
-import { UserTapTextEntity } from "src/user_tap/entities/user_tap_text.entity";
-import { UserTapLinkEntity } from "src/user_tap/entities/user_tap_link.entity";
 import { UpdateUserTapLinkDto } from "src/user_tap/dto/update-user-tap-link.dto";
 import { UpdateUserTapTextDto } from "src/user_tap/dto/update-user-tap-text.dto";
 import { v4 as uuidv4 } from "uuid";
 import * as sharp from "sharp";
-import { ActionTapDto } from "./dto/tap-delete.dto";
+import { UserUrlService } from "src/user_url/user_url.service";
+import { UserTapService } from "src/user_tap/user_tap.service";
 
 @Injectable()
 export class UserUserService {
@@ -34,24 +32,20 @@ export class UserUserService {
     @InjectRepository(UserTokenEntity)
     private readonly userTokenRepository: Repository<UserTokenEntity>,
 
-    private readonly jwtService: JwtService,
-
     @InjectRepository(UserPageEntity)
     private readonly userPageEntityRepository: Repository<UserPageEntity>,
 
     @InjectRepository(UserTodyLinkEntity)
     private readonly userTodayLinkEntityRepository: Repository<UserTodyLinkEntity>,
 
-    @InjectRepository(UserUrlEntity)
-    private readonly userUrlRepository: Repository<UserUrlEntity>,
+    private readonly jwtService: JwtService,
 
-    @InjectRepository(UserTapTextEntity)
-    private readonly userTapTextRepository: Repository<UserTapTextEntity>,
+    private readonly userUrlService: UserUrlService,
 
-    @InjectRepository(UserTapLinkEntity)
-    private readonly userTapLinkRepository: Repository<UserTapLinkEntity>
+    private readonly userTapService: UserTapService
   ) {}
 
+  //finish
   async findOAuthUser(kakao_id: number) {
     const findOneResult = await this.userRepository.findOne({
       where: {
@@ -62,6 +56,7 @@ export class UserUserService {
     return findOneResult;
   }
 
+  //finish
   async saveUser(dto: CreateUserUserDto) {
     const createUserDtoToEntity = plainToInstance(UserEntity, dto);
 
@@ -70,6 +65,7 @@ export class UserUserService {
     return saveResult;
   }
 
+  //finish
   async generateAccessToken(id: number): Promise<string> {
     const payload = {
       id: id,
@@ -80,7 +76,7 @@ export class UserUserService {
     });
   }
 
-  //7 days 604800
+  //finish
   async generateRefreshToken(id: number): Promise<string> {
     const payload = {
       id: id,
@@ -91,6 +87,7 @@ export class UserUserService {
     });
   }
 
+  //finish
   async defaultToken(user_id: number) {
     await this.userTokenRepository.save({
       user_id: user_id,
@@ -99,6 +96,7 @@ export class UserUserService {
     });
   }
 
+  //finish
   async setCurrentRefreshToken(
     refreshToken: string,
     userId: number
@@ -108,6 +106,7 @@ export class UserUserService {
     });
   }
 
+  //finish
   async setKaKaoCurrentAccessToken(
     accessToken: string,
     userId: number
@@ -117,7 +116,7 @@ export class UserUserService {
     });
   }
 
-  //finish---------
+  //finish
   async refreshTokenCheck(refreshTokenDto: string): Promise<{
     accessToken: string;
   }> {
@@ -126,7 +125,6 @@ export class UserUserService {
       { secret: process.env.JWT_REFRESH_SECRET }
     );
 
-    // Check if user exists
     const userId = decodedRefreshToken.id;
 
     const userFindResult = await this.userTokenRepository.findOne({
@@ -145,7 +143,7 @@ export class UserUserService {
     return { accessToken };
   }
 
-  //finish---------
+  //finish
   async getUserInfo(id: number) {
     const findResult = await this.userRepository.findOne({
       where: {
@@ -171,12 +169,6 @@ export class UserUserService {
       },
     });
 
-    // console.log('findTodayLink', findTodayLink);
-
-    // if (!findTodayLink?.user_url && findTodayLink !== null) {
-    //   findTodayLink.today_link = null;
-    // }
-
     const findPageUrl = await this.userPageEntityRepository.findOne({
       where: {
         user_id: id,
@@ -194,23 +186,6 @@ export class UserUserService {
       user_email: findResult?.user_email || null,
     };
   }
-
-  //모든 url 기록되는 곳
-  async saveUserUrl(id: number, dto: CreateUserUrlDto) {
-    const saveResult = await this.userUrlRepository.save(
-      new UserUrlEntity({
-        img: dto.img,
-        title: dto.title,
-        url: dto.url,
-        view: 0,
-        user_id: id,
-      })
-    );
-
-    return saveResult;
-  }
-
-  //프로필,닉네임, 한줄 설명, 오늘의 링크 없으면 save , 있으면 update
 
   async saveUserInfo(
     id: number,
@@ -242,14 +217,14 @@ export class UserUserService {
             //===============탭 링크 이미지 삭제 넣어야할듯
             if (dto.actions[i].link_img_delete) {
               //링크 이미지 삭제
-              await this.setNullLinkImg(dto.actions[i].tap_id);
+              await this.userTapService.setNullLinkImg(dto.actions[i].tap_id);
             } else {
               //링크 탭 삭제
-              await this.deleteTapLink(dto.actions[i].tap_id);
+              await this.userTapService.deleteTapLink(dto.actions[i].tap_id);
             }
           } else if (dto.actions[i].column == "text") {
             //테스트 탭 삭제
-            await this.deleteTapText(dto.actions[i].tap_id);
+            await this.userTapService.deleteTapText(dto.actions[i].tap_id);
           } else if (dto.actions[i].column == "profile") {
             await this.setNullProfileImg(id);
             //======================s3에 이미지 삭제하는 코드 추가 또는 누적시킬거면 안써도됨
@@ -292,7 +267,7 @@ export class UserUserService {
                 folded_state: dto.actions[i].folded_state,
                 link_img: key,
               } as UpdateUserTapLinkDto;
-              await this.updateTapLink(updateDto);
+              await this.userTapService.updateTapLink(updateDto);
             } else {
               const updateDto = {
                 tap_id: dto.actions[i].tap_id,
@@ -302,7 +277,7 @@ export class UserUserService {
                 folded_state: dto.actions[i].folded_state,
                 link_img: key,
               } as UpdateUserTapLinkDto;
-              await this.updateTapLink(updateDto);
+              await this.userTapService.updateTapLink(updateDto);
             }
           } else if (dto.actions[i].column == "text") {
             const updateDto = {
@@ -313,7 +288,7 @@ export class UserUserService {
               folded_state: dto.actions[i]?.folded_state,
             } as UpdateUserTapTextDto;
 
-            await this.updateTapText(updateDto);
+            await this.userTapService.updateTapText(updateDto);
           }
         }
       }
@@ -327,7 +302,7 @@ export class UserUserService {
 
     //today_link 없으면 안일어남
     if (dto.today_link) {
-      const saveResult = await this.saveUserUrl(
+      const saveResult = await this.userUrlService.saveUserUrl(
         id,
         new CreateUserUrlDto({
           img: dto?.img,
@@ -368,7 +343,6 @@ export class UserUserService {
   }
 
   async saveUserInfoNoFIle(id: number, dto: CreateUserInfoDto) {
-    //셋다 없다면 update 안일어남
     if (dto.nickname || dto.explanation) {
       await this.userRepository.update(id, {
         nickname: dto?.nickname,
@@ -376,39 +350,31 @@ export class UserUserService {
       });
     }
 
-    // console.log('dto', dto);
     if (dto.actions) {
       if (typeof dto.actions === "string") {
         dto.actions = JSON.parse(dto.actions);
       }
 
       for (let i = 0; i < dto.actions.length; i++) {
-        //탭 (text,link)삭제
         if (dto.actions[i].method == "delete") {
           if (dto.actions[i].column == "link") {
-            //===============탭 링크 이미지 삭제 넣어야할듯
             if (dto.actions[i].link_img_delete) {
               //링크 이미지 삭제
-              await this.setNullLinkImg(dto.actions[i].tap_id);
+              await this.userTapService.setNullLinkImg(dto.actions[i].tap_id);
             } else {
               //링크 탭 삭제
-              await this.deleteTapLink(dto.actions[i].tap_id);
+              await this.userTapService.deleteTapLink(dto.actions[i].tap_id);
             }
           } else if (dto.actions[i].column == "text") {
             //테스트 탭 삭제
-            await this.deleteTapText(dto.actions[i].tap_id);
+            await this.userTapService.deleteTapText(dto.actions[i].tap_id);
           } else if (dto.actions[i].column == "profile") {
             await this.setNullProfileImg(id);
-            //======================s3에 이미지 삭제하는 코드 추가 또는 누적시킬거면 안써도됨
           }
         } else {
-          //update 부분 <<프로필은 수정 완료,삭제까지
           if (dto.actions[i].column == "profile") {
             await this.setNullProfileImg(id);
-
-            //프로필 사진 변경
-          } //text,link 수정이랑 toggle 수정하면됨
-          else if (dto.actions[i].column == "link") {
+          } else if (dto.actions[i].column == "link") {
             const updateDto = {
               tap_id: dto.actions[i].tap_id,
               title: dto.actions[i].title,
@@ -417,7 +383,7 @@ export class UserUserService {
               folded_state: dto.actions[i].folded_state,
             } as UpdateUserTapLinkDto;
 
-            await this.updateTapLink(updateDto);
+            await this.userTapService.updateTapLink(updateDto);
           } else if (dto.actions[i].column == "text") {
             const updateDto = {
               tap_id: dto.actions[i]?.tap_id,
@@ -426,7 +392,7 @@ export class UserUserService {
               folded_state: dto.actions[i]?.folded_state,
             } as UpdateUserTapTextDto;
 
-            await this.updateTapText(updateDto);
+            await this.userTapService.updateTapText(updateDto);
           }
         }
       }
@@ -440,7 +406,7 @@ export class UserUserService {
 
     //today_link 없으면 안일어남
     if (dto.today_link) {
-      const saveResult = await this.saveUserUrl(
+      const saveResult = await this.userUrlService.saveUserUrl(
         id,
         new CreateUserUrlDto({
           img: dto?.img,
@@ -465,15 +431,6 @@ export class UserUserService {
           created_at: new Date(Date.now()),
           url_id: saveResult.id,
         });
-
-        // await this.saveUserUrl(
-        //   id,
-        //   new CreateUserUrlDto({
-        //     img: dto?.img,
-        //     title: dto.title,
-        //     url: dto.today_link,
-        //   }),
-        // );
       }
     }
 
@@ -492,18 +449,6 @@ export class UserUserService {
     const updateResult = await this.userRepository.update(user_id, {
       profile: "",
     });
-
-    if (!updateResult.affected) throw new Error("이미지 삭제 실패");
-
-    return true;
-  }
-
-  //링크 빈 객체로 변경
-  async setNullLinkImg(tap_id: number) {
-    const updateResult = await this.userTapLinkRepository.update(tap_id, {
-      img: "",
-    });
-    console.log(updateResult);
 
     if (!updateResult.affected) throw new Error("이미지 삭제 실패");
 
@@ -557,7 +502,6 @@ export class UserUserService {
     }
   }
 
-  //finish---------
   async checkPage(url: string) {
     if (url.length > 12) {
       throw new Error("url은 최대 12자입니다.");
@@ -576,7 +520,6 @@ export class UserUserService {
     }
   }
 
-  //finish---------
   async saveGenderAge(id: number, dto: UserReportDto) {
     if (dto.age.toString().length > 2)
       throw new Error("나이는 2자리 이하만 가능합니다.");
@@ -605,13 +548,8 @@ export class UserUserService {
     return true;
   }
 
-  //finish---------
   async updateTodayLink(user_id: number, url_id: number) {
-    const findResult = await this.userUrlRepository.findOne({
-      where: {
-        id: url_id,
-      },
-    });
+    const findResult = await this.userUrlService.findTodayUrlToUrl(url_id);
 
     if (!findResult)
       throw new NotFoundException("존재하지 않는 url_id 입니다.");
@@ -642,17 +580,6 @@ export class UserUserService {
 
     if (!findOneResult) throw new NotFoundException("존재하지 않는 url입니다.");
 
-    const findUserLink = await this.userUrlRepository.find({
-      where: {
-        user_id: findOneResult.user_id,
-      },
-      order: {
-        created_at: "DESC",
-      },
-    });
-
-    // console.log('findUserLink', findUserLink);
-
     let profile_img;
     if (findOneResult.user?.profile)
       profile_img = await this.getPreSignedUrl(findOneResult.user?.profile);
@@ -667,8 +594,6 @@ export class UserUserService {
       today_link: findOneResult?.user?.today_link?.today_link || null,
       created_at: findOneResult?.user?.today_link?.created_at || null,
     };
-
-    // return findOneResult;
   }
 
   async logoutTokenNull(user_id: number) {
@@ -708,8 +633,6 @@ export class UserUserService {
     }
   }
 
-  //---------------------------
-  //이미지 업로드
   async uploadFileDB(
     key: string,
     file: Express.Multer.File,
@@ -779,71 +702,5 @@ export class UserUserService {
     const preSignedUrl = await s3.getSignedUrlPromise("getObject", imageParam);
 
     return preSignedUrl;
-  }
-
-  //링크 삭제 => user_tap으로 이동
-  async deleteTapLink(id: number) {
-    const updateResult = await this.userTapLinkRepository.update(id, {
-      delete_at: new Date(Date.now()),
-    });
-
-    if (!updateResult.affected) throw new Error("tap 삭제 실패");
-
-    return true;
-  }
-
-  //테스트 삭제 => user_tap으로 이동
-  async deleteTapText(tap_id: number) {
-    const updateResult = await this.userTapTextRepository.update(tap_id, {
-      delete_at: new Date(Date.now()),
-    });
-
-    if (!updateResult.affected) throw new Error("tap 삭제 실패");
-
-    return true;
-  }
-
-  //link 수정 => user_tap으로 이동
-  async updateTapLink(dto: UpdateUserTapLinkDto) {
-    let time: any;
-    if (dto.toggle_state !== undefined && dto.toggle_state !== null) {
-      time = new Date(Date.now());
-    } else {
-      time = undefined;
-    }
-
-    const updateResult = await this.userTapLinkRepository.update(dto.tap_id, {
-      title: dto?.title,
-      url: dto?.url,
-      img: dto?.link_img,
-      toggle_state: dto?.toggle_state,
-      toggle_update_time: time,
-      folded_state: dto?.folded_state,
-    });
-
-    if (!updateResult.affected) throw new Error("텍스트 내용 수정 실패");
-
-    return true;
-  }
-
-  //text 수정 =>user_tap service로 이동
-  async updateTapText(dto: UpdateUserTapTextDto) {
-    let time: any;
-    if (dto.toggle_state !== undefined && dto.toggle_state !== null) {
-      time = new Date(Date.now());
-    } else {
-      time = undefined;
-    }
-
-    const updateResult = await this.userTapTextRepository.update(dto.tap_id, {
-      context: dto?.context,
-      toggle_state: dto?.toggle_state,
-      toggle_update_time: time,
-      folded_state: dto?.folded_state,
-    });
-
-    if (!updateResult.affected) throw new Error("텍스트 내용 수정 실패");
-
-    return true;
   }
 }

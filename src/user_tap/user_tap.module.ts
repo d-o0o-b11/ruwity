@@ -8,5 +8,6 @@ import { JwtConfigModule } from "src/jwt-service/jwt.module";
   imports: [EntitiesModule, JwtConfigModule],
   controllers: [UserTapController],
   providers: [UserTapService],
+  exports: [UserTapService],
 })
 export class UserTapModule {}

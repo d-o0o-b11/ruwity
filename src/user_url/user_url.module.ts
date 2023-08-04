@@ -8,5 +8,6 @@ import { JwtConfigModule } from "src/jwt-service/jwt.module";
   imports: [EntitiesModule, JwtConfigModule],
   controllers: [UserUrlController],
   providers: [UserUrlService],
+  exports: [UserUrlService],
 })
 export class UserUrlModule {}
