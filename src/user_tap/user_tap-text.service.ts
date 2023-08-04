@@ -1,11 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { UserTapLinkEntity } from "./entities/user_tap_link.entity";
 import { UserTapTextEntity } from "./entities/user_tap_text.entity";
 import { Repository } from "typeorm";
 import { UpdateUserTapTextDto } from "./dto/update-user-tap-text.dto";
-import { UpdateUserTapLinkDto } from "./dto/update-user-tap-link.dto";
 import { s3 } from "src/config/config/s3.config";
+import { UserTapLinkService } from "./user_tap-link.service";
 
 @Injectable()
 export class UserTapService {
@@ -13,8 +12,7 @@ export class UserTapService {
     @InjectRepository(UserTapTextEntity)
     private readonly userTapTextRepository: Repository<UserTapTextEntity>,
 
-    @InjectRepository(UserTapLinkEntity)
-    private readonly userTapLinkRepository: Repository<UserTapLinkEntity>
+    private readonly userTapLinkService: UserTapLinkService // @InjectRepository(UserTapLinkEntity) // private readonly userTapLinkRepository: Repository<UserTapLinkEntity>
   ) {}
 
   async saveTapText(id: number) {
@@ -60,62 +58,7 @@ export class UserTapService {
     return true;
   }
 
-  async saveTapLink(id: number) {
-    const saveResult = await this.userTapLinkRepository.save(
-      new UserTapLinkEntity({
-        tap_type: "link",
-        img: "",
-        title: "",
-        url: "",
-        user_id: id,
-      })
-    );
-
-    return saveResult;
-  }
-
-  async updateTapLink(dto: UpdateUserTapLinkDto) {
-    let time: any;
-    if (dto.toggle_state !== undefined && dto.toggle_state !== null) {
-      time = new Date(Date.now());
-    } else {
-      time = undefined;
-    }
-
-    const updateResult = await this.userTapLinkRepository.update(dto.tap_id, {
-      title: dto?.title,
-      url: dto?.url,
-      img: dto?.link_img,
-      toggle_state: dto?.toggle_state,
-      toggle_update_time: time,
-      folded_state: dto?.folded_state,
-    });
-
-    if (!updateResult.affected) throw new Error("텍스트 내용 수정 실패");
-
-    return true;
-  }
-
-  async deleteTapLink(id: number) {
-    const updateResult = await this.userTapLinkRepository.update(id, {
-      delete_at: new Date(Date.now()),
-    });
-
-    if (!updateResult.affected) throw new Error("tap 삭제 실패");
-
-    return true;
-  }
-
-  async setNullLinkImg(tap_id: number) {
-    const updateResult = await this.userTapLinkRepository.update(tap_id, {
-      img: "",
-    });
-
-    if (!updateResult.affected) throw new Error("이미지 삭제 실패");
-
-    return true;
-  }
-
+  //여기서 하기
   async findAllByUserIdOrderByCreatedAtDesc(user_id: number): Promise<any[]> {
     const textResults = await this.userTapTextRepository.find({
       where: {
@@ -137,13 +80,14 @@ export class UserTapService {
       });
     }
 
-    const linkResults = await this.userTapLinkRepository.find({
-      where: {
-        user_id: user_id,
-        delete_at: null,
-        toggle_state: true,
-      },
-    });
+    // const linkResults = await this.userTapLinkRepository.find({
+    //   where: {
+    //     user_id: user_id,
+    //     delete_at: null,
+    //     toggle_state: true,
+    //   },
+    // });
+    const linkResults = await this.userTapLinkService.findTapLink(user_id);
 
     const linkRe = [];
     for (let i = 0; i < linkResults.length; i++) {
@@ -183,6 +127,7 @@ export class UserTapService {
     return resultWithoutCreatedAt;
   }
 
+  //여기서 하기
   async getPreSignedUrl(key: string): Promise<string> {
     const imageParam = {
       Bucket: process.env.AWS_BUCKET_NAME,

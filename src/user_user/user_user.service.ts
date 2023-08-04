@@ -21,7 +21,8 @@ import { UpdateUserTapTextDto } from "src/user_tap/dto/update-user-tap-text.dto"
 import { v4 as uuidv4 } from "uuid";
 import * as sharp from "sharp";
 import { UserUrlService } from "src/user_url/user_url.service";
-import { UserTapService } from "src/user_tap/user_tap.service";
+import { UserTapService } from "src/user_tap/user_tap-text.service";
+import { UserTapLinkService } from "src/user_tap/user_tap-link.service";
 
 @Injectable()
 export class UserUserService {
@@ -42,7 +43,9 @@ export class UserUserService {
 
     private readonly userUrlService: UserUrlService,
 
-    private readonly userTapService: UserTapService
+    private readonly userTapService: UserTapService,
+
+    private readonly userTapLinkService: UserTapLinkService
   ) {}
 
   //finish
@@ -217,10 +220,14 @@ export class UserUserService {
             //===============탭 링크 이미지 삭제 넣어야할듯
             if (dto.actions[i].link_img_delete) {
               //링크 이미지 삭제
-              await this.userTapService.setNullLinkImg(dto.actions[i].tap_id);
+              await this.userTapLinkService.setNullLinkImg(
+                dto.actions[i].tap_id
+              );
             } else {
               //링크 탭 삭제
-              await this.userTapService.deleteTapLink(dto.actions[i].tap_id);
+              await this.userTapLinkService.deleteTapLink(
+                dto.actions[i].tap_id
+              );
             }
           } else if (dto.actions[i].column == "text") {
             //테스트 탭 삭제
@@ -267,7 +274,7 @@ export class UserUserService {
                 folded_state: dto.actions[i].folded_state,
                 link_img: key,
               } as UpdateUserTapLinkDto;
-              await this.userTapService.updateTapLink(updateDto);
+              await this.userTapLinkService.updateTapLink(updateDto);
             } else {
               const updateDto = {
                 tap_id: dto.actions[i].tap_id,
@@ -277,7 +284,7 @@ export class UserUserService {
                 folded_state: dto.actions[i].folded_state,
                 link_img: key,
               } as UpdateUserTapLinkDto;
-              await this.userTapService.updateTapLink(updateDto);
+              await this.userTapLinkService.updateTapLink(updateDto);
             }
           } else if (dto.actions[i].column == "text") {
             const updateDto = {
@@ -360,10 +367,14 @@ export class UserUserService {
           if (dto.actions[i].column == "link") {
             if (dto.actions[i].link_img_delete) {
               //링크 이미지 삭제
-              await this.userTapService.setNullLinkImg(dto.actions[i].tap_id);
+              await this.userTapLinkService.setNullLinkImg(
+                dto.actions[i].tap_id
+              );
             } else {
               //링크 탭 삭제
-              await this.userTapService.deleteTapLink(dto.actions[i].tap_id);
+              await this.userTapLinkService.deleteTapLink(
+                dto.actions[i].tap_id
+              );
             }
           } else if (dto.actions[i].column == "text") {
             //테스트 탭 삭제
@@ -383,7 +394,7 @@ export class UserUserService {
               folded_state: dto.actions[i].folded_state,
             } as UpdateUserTapLinkDto;
 
-            await this.userTapService.updateTapLink(updateDto);
+            await this.userTapLinkService.updateTapLink(updateDto);
           } else if (dto.actions[i].column == "text") {
             const updateDto = {
               tap_id: dto.actions[i]?.tap_id,

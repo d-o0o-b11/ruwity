@@ -5,16 +5,21 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { UserTapService } from "./user_tap.service";
+import { UserTapService } from "./user_tap-text.service";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { JwtAccessAuthGuard } from "src/kakao-login/jwt-access.guard";
 import { JWTToken } from "src/kakao-login/dto/jwt-token.dto";
 import { CtxUser } from "src/decorator/auth.decorator";
+import { UserTapLinkService } from "./user_tap-link.service";
 
 @ApiTags("Tap API")
 @Controller("user-tap")
 export class UserTapController {
-  constructor(private readonly userTapService: UserTapService) {}
+  constructor(
+    private readonly userTapService: UserTapService,
+
+    private readonly userTapLinkService: UserTapLinkService
+  ) {}
 
   @Post("text")
   @ApiBearerAuth("access-token")
@@ -38,7 +43,7 @@ export class UserTapController {
   })
   async saveTapLink(@CtxUser() token: JWTToken) {
     try {
-      return await this.userTapService.saveTapLink(token.id);
+      return await this.userTapLinkService.saveTapLink(token.id);
     } catch (e) {
       throw new InternalServerErrorException(e.message);
     }
