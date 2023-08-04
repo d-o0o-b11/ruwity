@@ -14,7 +14,7 @@ import { CreateUserInfoDto } from "./dto/create-user-info.dto";
 import { UserPageEntity } from "./entities/user_page.entity";
 import { UserReportDto } from "./dto/save-user-report.dto";
 import { UserTodyLinkEntity } from "./entities/user_today_link.entity";
-import { CreateUserUrlDto } from "src/user_url/dto/create-user_url.dto";
+import { CreateUserUrlDto } from "src/user_user/dto/create-user_url.dto";
 import { UserUrlEntity } from "src/user_url/entities/user_url.entity";
 import { s3 } from "src/config/config/s3.config";
 import { UserTapTextEntity } from "src/user_tap/entities/user_tap_text.entity";
