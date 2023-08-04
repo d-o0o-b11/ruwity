@@ -4,8 +4,6 @@ import { UserTapLinkEntity } from "./entities/user_tap_link.entity";
 import { UserTapTextEntity } from "./entities/user_tap_text.entity";
 import { Repository } from "typeorm";
 import { UpdateUserTapTextDto } from "./dto/update-user-tap-text.dto";
-import { UpdateUserTapFolderStateDto } from "./dto/create-user-tap-folder.dto";
-import { UpdateUserTapToggle } from "./dto/create-user-tap-toggle.dto";
 import { UpdateUserTapLinkDto } from "./dto/update-user-tap-link.dto";
 import { s3 } from "src/config/config/s3.config";
 
@@ -33,32 +31,21 @@ export class UserTapService {
   }
 
   async updateTapText(dto: UpdateUserTapTextDto) {
+    let time: any;
+    if (dto.toggle_state !== undefined && dto.toggle_state !== null) {
+      time = new Date(Date.now());
+    } else {
+      time = undefined;
+    }
+
     const updateResult = await this.userTapTextRepository.update(dto.tap_id, {
-      context: dto.context,
+      context: dto?.context,
+      toggle_state: dto?.toggle_state,
+      toggle_update_time: time,
+      folded_state: dto?.folded_state,
     });
 
     if (!updateResult.affected) throw new Error("텍스트 내용 수정 실패");
-
-    return true;
-  }
-
-  async updateTapFolderState(dto: UpdateUserTapFolderStateDto) {
-    const updateResuelt = await this.userTapTextRepository.update(dto.tap_id, {
-      folded_state: dto.folded_state,
-    });
-
-    if (!updateResuelt.affected) throw new Error("폴더 상태 수정 실패");
-
-    return true;
-  }
-
-  async updateTapTextToggle(dto: UpdateUserTapToggle) {
-    const updateResuelt = await this.userTapTextRepository.update(dto.tap_id, {
-      toggle_state: dto.toggle_state,
-      toggle_update_time: new Date(Date.now()),
-    });
-
-    if (!updateResuelt.affected) throw new Error("공개 설정 수정 실패");
 
     return true;
   }
@@ -88,33 +75,23 @@ export class UserTapService {
   }
 
   async updateTapLink(dto: UpdateUserTapLinkDto) {
+    let time: any;
+    if (dto.toggle_state !== undefined && dto.toggle_state !== null) {
+      time = new Date(Date.now());
+    } else {
+      time = undefined;
+    }
+
     const updateResult = await this.userTapLinkRepository.update(dto.tap_id, {
       title: dto?.title,
       url: dto?.url,
+      img: dto?.link_img,
+      toggle_state: dto?.toggle_state,
+      toggle_update_time: time,
+      folded_state: dto?.folded_state,
     });
 
     if (!updateResult.affected) throw new Error("텍스트 내용 수정 실패");
-
-    return true;
-  }
-
-  async updateTapLinkFolderState(dto: UpdateUserTapFolderStateDto) {
-    const updateResuelt = await this.userTapLinkRepository.update(dto.tap_id, {
-      folded_state: dto.folded_state,
-    });
-
-    if (!updateResuelt.affected) throw new Error("폴더 상태 수정 실패");
-
-    return true;
-  }
-
-  async updateTapLinkTextToggle(dto: UpdateUserTapToggle) {
-    const updateResuelt = await this.userTapLinkRepository.update(dto.tap_id, {
-      toggle_state: dto.toggle_state,
-      toggle_update_time: new Date(Date.now()),
-    });
-
-    if (!updateResuelt.affected) throw new Error("공개 설정 수정 실패");
 
     return true;
   }
