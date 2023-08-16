@@ -1,6 +1,6 @@
-import { Module } from "@nestjs/common";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { JwtModule, JwtService } from "@nestjs/jwt";
+import { Module } from '@nestjs/common';
+import { JwtModule, JwtService } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -9,7 +9,7 @@ import { JwtModule, JwtService } from "@nestjs/jwt";
       useFactory: async (configService: ConfigService) => ({
         secret: process.env.JWT_ACCESS_SECRET,
         signOptions: {
-          expiresIn: "12h",
+          expiresIn: '12h',
         },
       }),
       inject: [ConfigService],
@@ -18,4 +18,4 @@ import { JwtModule, JwtService } from "@nestjs/jwt";
   providers: [JwtService],
   exports: [JwtModule],
 })
-export class JwtConfigModule {}
+export class JsonWebTokenModule {}

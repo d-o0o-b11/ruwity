@@ -1,14 +1,14 @@
-import { Module } from "@nestjs/common";
-import { UserTapService } from "./user_tap-text.service";
-import { UserTapController } from "./user_tap.controller";
-import { EntitiesModule } from "src/entity.module";
-import { JwtConfigModule } from "src/jwt-service/jwt.module";
-import { UserTapLinkService } from "./user_tap-link.service";
+import { Module } from '@nestjs/common';
+import { UserTapTextService } from './service/user_tap_text.service';
+import { UserTapController } from './user_tap.controller';
+import { EntitiesModule } from 'src/entity.module';
+import { JsonWebTokenModule } from 'src/jwt.module';
+import { UserTapLinkService } from './service/user_tap_link.service';
 
 @Module({
-  imports: [EntitiesModule, JwtConfigModule],
+  imports: [EntitiesModule, JsonWebTokenModule],
   controllers: [UserTapController],
-  providers: [UserTapService, UserTapLinkService],
-  exports: [UserTapService, UserTapLinkService],
+  providers: [UserTapTextService, UserTapLinkService],
+  exports: [UserTapTextService, UserTapLinkService],
 })
 export class UserTapModule {}

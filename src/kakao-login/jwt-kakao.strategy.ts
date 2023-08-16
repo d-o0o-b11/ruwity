@@ -1,7 +1,7 @@
-import { PassportStrategy } from "@nestjs/passport";
-import { Profile, Strategy } from "passport-kakao";
+import { PassportStrategy } from '@nestjs/passport';
+import { Profile, Strategy } from 'passport-kakao';
 
-export class JwtKakaoStrategy extends PassportStrategy(Strategy, "kakao") {
+export class JwtKakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   constructor() {
     super({
       clientID: process.env.REST_API,
