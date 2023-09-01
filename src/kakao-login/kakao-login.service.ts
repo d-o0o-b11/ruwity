@@ -1,17 +1,23 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserUserDto } from 'src/user_user/dto/create-user_user.dto';
-import { UserEntity } from 'src/user_user/entities/user_user.entity';
-import { UserUserService } from 'src/user_user/user_user.service';
-import { KakaoLoginUserDto } from './dto/kakao-login.dto';
+import { Inject, Injectable, forwardRef } from "@nestjs/common";
+import { CreateUserUserDto } from "src/user_user/dto/create-user_user.dto";
+import { UserEntity } from "src/user_user/entities/user_user.entity";
+import { KakaoLoginUserDto } from "./dto/kakao-login.dto";
+import {
+  USER_USER_SERVICE_TOKEN,
+  UserUserInterface,
+} from "src/user_user/interfaces/user_user.interface";
 
 @Injectable()
 export class KakaoLoginService {
-  constructor(private readonly userService: UserUserService) {}
+  constructor(
+    @Inject(forwardRef(() => USER_USER_SERVICE_TOKEN))
+    private readonly userUserInterface: UserUserInterface
+  ) {}
 
   async kakaoLogin(kakao_user: KakaoLoginUserDto) {
     const { kakao_id, email } = kakao_user;
 
-    const findResult = await this.userService.findOAuthUser(kakao_id);
+    const findResult = await this.userUserInterface.findOAuthUser(kakao_id);
 
     let saveResult: UserEntity;
     //최초 회원가입
@@ -21,32 +27,32 @@ export class KakaoLoginService {
         user_email: email,
       });
 
-      saveResult = await this.userService.saveUser(data);
+      saveResult = await this.userUserInterface.saveUser(data);
 
-      await this.userService.defaultToken(saveResult.id);
+      await this.userUserInterface.defaultToken(saveResult.id);
     }
-    const access_token = await this.userService.generateAccessToken(
-      findResult?.id || saveResult.id,
+    const access_token = await this.userUserInterface.generateAccessToken(
+      findResult?.id || saveResult.id
     );
 
-    const refresh_token = await this.userService.generateRefreshToken(
-      findResult?.id || saveResult.id,
+    const refresh_token = await this.userUserInterface.generateRefreshToken(
+      findResult?.id || saveResult.id
     );
 
-    await this.userService.setCurrentRefreshToken(
+    await this.userUserInterface.setCurrentRefreshToken(
       refresh_token,
-      findResult?.id || saveResult.id,
+      findResult?.id || saveResult.id
     );
 
-    await this.userService.setKaKaoCurrentAccessToken(
+    await this.userUserInterface.setKaKaoCurrentAccessToken(
       access_token,
-      findResult?.id || saveResult.id,
+      findResult?.id || saveResult.id
     );
 
     return { access_token: access_token, refresh_token: refresh_token };
   }
 
   async refreshTokencheck(refresh_token: string) {
-    return await this.userService.refreshTokenCheck(refresh_token);
+    return await this.userUserInterface.refreshTokenCheck(refresh_token);
   }
 }
