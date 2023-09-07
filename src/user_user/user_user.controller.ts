@@ -23,7 +23,6 @@ import {
 import { CtxUser } from "src/decorator/auth.decorator";
 import { JWTToken } from "src/kakao-login/dto/jwt-token.dto";
 import { JwtAccessAuthGuard } from "src/kakao-login/jwt-access.guard";
-import { UserUserService } from "./services/user_user.service";
 import { CreateUserInfoDto } from "./dto/create-user-info.dto";
 import { UserReportDto } from "./dto/save-user-report.dto";
 import { FileFieldsInterceptor } from "@nestjs/platform-express";
